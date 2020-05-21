@@ -32,6 +32,60 @@ variable "role_arn" {
   type    = string
 }
 
+variable "update_kubeconfig" {
+  type = bool
+  default = false
+}
+
+variable "map_users" {
+  type = list(object({
+    userarn = string
+    username = string
+    groups = list(string)
+  }))
+  default = []
+
+# default = [
+#   {
+#     userarn  = "arn:aws:iam::66666666666:user/user1"
+#     username = "user1"
+#     groups   = ["system:masters"]
+#   },
+#   {
+#     userarn  = "arn:aws:iam::66666666666:user/user2"
+#     username = "user2"
+#     groups   = ["system:masters"]
+#   },
+# ]
+}
+
+variable "map_roles" {
+  type = list(object({
+    rolearn = string
+    username = string
+    groups = list(string)
+  }))
+  default = []
+
+# default = [
+#   {
+#     rolearn  = "arn:aws:iam::66666666666:role/role1"
+#     username = "role1"
+#     groups   = ["system:masters"]
+#   },
+# ]
+}
+
+variable "map_accounts" {
+  type = list(string)
+  default = []
+
+# default = [
+#   "777777777777",
+#   "888888888888",
+#]
+}
+
 terraform {
   required_version = ">= 0.12.0"
 }
@@ -141,6 +195,16 @@ module "eks" {
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
     }
   ]
+  map_users = var.map_users
+  map_roles = var.map_roles
+  map_accounts = var.map_accounts
+}
+
+resource "null_resource" "update_kubeconfig" {
+  count = var.update_kubeconfig ? 1 : 0
+  provisioner "local-exec" {
+    command = "aws eks update-kubeconfig --name ${local.cluster_name}"
+  }
 }
 
 output "cluster_name" {
