@@ -23,107 +23,58 @@ variable "az_count" {
   default = 2
 }
 
-variable "region" {
-  type    = string
-  default = "us-east-1"
-}
-
-variable "role_arn" {
-  type    = string
-}
-
 variable "update_kubeconfig" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "map_users" {
   type = list(object({
-    userarn = string
+    userarn  = string
     username = string
-    groups = list(string)
+    groups   = list(string)
   }))
   default = []
 
-# default = [
-#   {
-#     userarn  = "arn:aws:iam::66666666666:user/user1"
-#     username = "user1"
-#     groups   = ["system:masters"]
-#   },
-#   {
-#     userarn  = "arn:aws:iam::66666666666:user/user2"
-#     username = "user2"
-#     groups   = ["system:masters"]
-#   },
-# ]
+  # default = [
+  #   {
+  #     userarn  = "arn:aws:iam::66666666666:user/user1"
+  #     username = "user1"
+  #     groups   = ["system:masters"]
+  #   },
+  #   {
+  #     userarn  = "arn:aws:iam::66666666666:user/user2"
+  #     username = "user2"
+  #     groups   = ["system:masters"]
+  #   },
+  # ]
 }
 
 variable "map_roles" {
   type = list(object({
-    rolearn = string
+    rolearn  = string
     username = string
-    groups = list(string)
+    groups   = list(string)
   }))
   default = []
 
-# default = [
-#   {
-#     rolearn  = "arn:aws:iam::66666666666:role/role1"
-#     username = "role1"
-#     groups   = ["system:masters"]
-#   },
-# ]
+  # default = [
+  #   {
+  #     rolearn  = "arn:aws:iam::66666666666:role/role1"
+  #     username = "role1"
+  #     groups   = ["system:masters"]
+  #   },
+  # ]
 }
 
 variable "map_accounts" {
-  type = list(string)
+  type    = list(string)
   default = []
 
-# default = [
-#   "777777777777",
-#   "888888888888",
-#]
-}
-
-terraform {
-  required_version = ">= 0.12.0"
-}
-
-provider "aws" {
-  assume_role {
-    role_arn = var.role_arn
-    session_name = var.name_prefix
-  }
-  region  = var.region
-}
-
-provider "random" {
-  version = "~> 2.1"
-}
-
-provider "local" {
-  version = "~> 1.2"
-}
-
-provider "null" {
-  version = "~> 2.1"
-}
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-  version                = "~> 1.11"
+  # default = [
+  #   "777777777777",
+  #   "888888888888",
+  #]
 }
 
 data "aws_availability_zones" "available" {
@@ -195,8 +146,8 @@ module "eks" {
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
     }
   ]
-  map_users = var.map_users
-  map_roles = var.map_roles
+  map_users    = var.map_users
+  map_roles    = var.map_roles
   map_accounts = var.map_accounts
 }
 
@@ -209,4 +160,8 @@ resource "null_resource" "update_kubeconfig" {
 
 output "cluster_name" {
   value = local.cluster_name
+}
+
+output "cluster_id" {
+  value = module.eks.cluster_id
 }
